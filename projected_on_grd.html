@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Vector data on ground</title>
+        <style>
+            html { height: 100%; }
+            body { margin: 0; overflow: hidden; height: 100%; }
+            #viewerDiv { margin: auto; height: 100%; width: 100%; padding: 0; }
+            canvas { display: block }
+        </style>
+    </head>
+    <body>
+        <div id="viewerDiv"></div>
+        <script src="node_modules/itowns/dist/itowns.js"></script>
+        <script type="text/javascript">
+
+            // Retrieve the view container
+            var viewerDiv = document.getElementById('viewerDiv');
+
+            // Define the camera initial placement
+            var placement = {
+                coord: new itowns.Coordinates('EPSG:4326', 3.05, 48.97),
+                range: 15000,
+            };
+
+            // Create the view
+            var view = new itowns.GlobeView(viewerDiv, placement);
+
+            // Define the source of the ortho-images
+            var orthoSource = new itowns.WMTSSource({
+                url: 'https://wxs.ign.fr/3ht7xcw6f7nciopo16etuqp2/geoportail/wmts',
+                crs: "EPSG:3857",
+                name: 'ORTHOIMAGERY.ORTHOPHOTOS',
+                tileMatrixSet: 'PM',
+                format: 'image/jpeg',
+            })
+            // Create the ortho-images ColorLayer and add it to the view
+            var orthoLayer = new itowns.ColorLayer('Ortho', {
+                source: orthoSource,
+            });
+            view.addLayer(orthoLayer);
+
+            // Define the source of the dem data
+            var elevationSource = new itowns.WMTSSource({
+                url: 'https://wxs.ign.fr/3ht7xcw6f7nciopo16etuqp2/geoportail/wmts',
+                crs: 'EPSG:4326',
+                name: 'ELEVATION.ELEVATIONGRIDCOVERAGE.SRTM3',
+                tileMatrixSet: 'WGS84G',
+                format: 'image/x-bil;bits=32',
+                zoom: {min: 3, max: 10},
+            });
+            // Create the DEM ElevationLayer and add it to the view
+            var elevationLayer = new itowns.ElevationLayer('DEM', {
+                source: elevationSource,
+            });
+            view.addLayer(elevationLayer);
+            
+            // Define the source of the flood area data
+            var floodSource = new itowns.FileSource({
+                url: 'https://raw.githubusercontent.com/iTowns/iTowns2-sample-data/master/multipolygon.geojson',
+                crs: 'EPSG:4326',
+                format: 'application/json',
+            });
+            
+            // Define a style for the flood area data
+            var floodStyle = new itowns.Style({
+                fill: {
+                    color: 'cyan',
+                    opacity: 0.3,
+                },
+                stroke: {
+                    color: 'blue',
+                },
+            });
+            
+            // Create the flood area ColorLayer and add it to the view
+            var floodLayer = new itowns.ColorLayer('flood', {
+                source: floodSource,
+                style: floodStyle,
+            });
+            view.addLayer(floodLayer);
+            
+            // Define the source of the city data
+            var citySource = new itowns.FileSource({
+                url: 'https://raw.githubusercontent.com/iTowns/iTowns2-sample-data/master/cities.geojson',
+                crs: 'EPSG:4326',
+                format: 'application/json',
+            });
+            
+            // Define a style for the city data
+            var cityStyle = new itowns.Style({
+                stroke: {
+                    color: 'red',
+                },
+                point: {
+                    color: 'white',
+                    line: 'red',
+                    radius: 3,
+                },
+                text: {
+                    field: '{name}',
+                    anchor: 'bottom-left',
+                    size: 18,
+                    haloColor: 'white',
+                    haloWidth: 1,
+                    font: ['monospace'],
+                },
+            });
+            
+            // Create the city data ColorLayer and add it to the view
+            var cityLayer = new itowns.ColorLayer('cities', {
+                source: citySource,
+                style: cityStyle,
+                addLabelLayer: true,
+            });
+            view.addLayer(cityLayer);
+        </script>
+    </body>
+</html>

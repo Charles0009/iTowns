@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Simple globe with iTowns</title>
+        <style>
+            html { height: 100%; }
+            body { margin: 0; overflow: hidden; height: 100%; }
+            #viewerDiv { margin: auto; height: 100%; width: 100%; padding: 0; }
+            canvas { display: block }
+        </style>
+     </head>
+     <body>
+        <div id="viewerDiv"></div>
+        <script src="node_modules/itowns/dist/itowns.js"></script>
+        <script type ="module" src="node_modules/module_three/three.min.js"></script>
+        <script type="text/javascript">
+
+            var THREE = itowns.THREE;
+
+            var viewerDiv = document.getElementById('viewerDiv');
+            var renderer = new THREE.WebGLRenderer();
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement );
+
+            var placement = {
+                coord: new itowns.Coordinates('EPSG:4326', 2.351323, 48.856712),
+                range: 25000000
+            };
+            var view = new itowns.GlobeView(viewerDiv, placement);
+
+            var orthoSource = new itowns.WMTSSource({
+                url: 'https://wxs.ign.fr/3ht7xcw6f7nciopo16etuqp2/geoportail/wmts',
+                crs: "EPSG:3857",
+                name: 'ORTHOIMAGERY.ORTHOPHOTOS',
+                tileMatrixSet: 'PM',
+                format: 'image/jpeg',
+            })
+
+            var orthoLayer = new itowns.ColorLayer('Ortho', {
+                source: orthoSource,
+            });
+
+            view.addLayer(orthoLayer);
+
+            var elevationSource = new itowns.WMTSSource({
+                url: 'https://wxs.ign.fr/3ht7xcw6f7nciopo16etuqp2/geoportail/wmts',
+                crs: 'EPSG:4326',
+                name: 'ELEVATION.ELEVATIONGRIDCOVERAGE.SRTM3',
+                tileMatrixSet: 'WGS84G',
+                format: 'image/x-bil;bits=32',
+                zoom: {min: 3, max: 10},
+            });
+
+            var elevationLayer = new itowns.ElevationLayer('MNT_WORLD', {
+                source: elevationSource,
+            });
+
+
+            view.addLayer(elevationLayer);
+        
+            ///////////////////////////////
+            //// creation des Nuages /////
+            ///////////////////////////////
+
+
+            var geometry_cloud = new THREE.SphereGeometry(6500000, 64, 64);
+            var material_cloud	= new THREE.MeshPhongMaterial({
+                    map: new THREE.TextureLoader().load('/images/cloud_white.png'),
+                    transparent: true,
+            } )
+            var clouds = new THREE.Mesh( geometry_cloud, material_cloud );  
+
+            clouds.rotateX((Math.PI/2));
+            clouds.updateMatrixWorld();
+            
+            view.scene.add( clouds )
+
+            view.scene.add(new THREE.AmbientLight(0xFFFFFF));
+
+            function render() {
+            requestAnimationFrame( render);
+            clouds.rotation.y +=0.0015;
+            
+            renderer.render( view.scene, view );
+            }
+
+            render();
+            ///////////////////////////////
+            // creation de l'atmosphere ///
+            ///////////////////////////////
+
+
+            // var customMaterial = new THREE.ShaderMaterial( 
+            //     {
+            //         uniforms: {  },
+            //         vertexShader:   document.getElementById( 'vertexShader'   ).textContent,
+            //         fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
+            //         side: THREE.BackSide,
+            //         blending: THREE.AdditiveBlending,
+            //         transparent: true
+            //     }   );
+                    
+            // var ballGeometry = new THREE.SphereGeometry( 0.6, 50, 50);
+            // var ball = new THREE.Mesh( ballGeometry, customMaterial );
+            // scene.add( ball );
+
+        
+        
+        
+        </script>
+     </body>
+</html>
